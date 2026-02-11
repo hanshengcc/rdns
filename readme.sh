@@ -1,9 +1,7 @@
-https://le6-1-103at400.pulsedmedia.com/public-indexx/dns_data/
+# https://le6-1-103at400.pulsedmedia.com/public-indexx/dns_data/
 
 #安装aria2c
 sudo snap install aria2c
-
-
 
 #下载最新的RDNS数据库
 aria2c -s 16 -x 16 -k 1M -c --summary-interval=0 " https://le6-1-103at400.pulsedmedia.com/public-indexx/latest_rdns.json.gz"
