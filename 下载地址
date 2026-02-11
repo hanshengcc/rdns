@@ -1,0 +1,75 @@
+https://le6-1-103at400.pulsedmedia.com/public-indexx/dns_data/
+
+#安装aria2c
+sudo snap install aria2c
+
+
+
+#下载最新的RDNS数据库
+aria2c -s 16 -x 16 -k 1M -c --summary-interval=0 " https://le6-1-103at400.pulsedmedia.com/public-indexx/latest_rdns.json.gz"
+
+
+#需要安装python3
+sudo snap install duckdb
+
+
+# 这会创建一个名为 dns_warehouse.db 的数据库文件
+duckdb dns_warehouse.db "CREATE TABLE rdns AS SELECT ip, ptr[1] AS domain FROM read_json_auto('2026-01_rdns_ipv4.json.gz')"
+
+# 导出全部蜘蛛到csv
+duckdb dns_warehouse.db -csv -c "
+SELECT 
+    ip, 
+    domain,
+    CASE 
+        WHEN domain LIKE '%googlebot%' THEN 'Google'
+        WHEN domain LIKE '%baiduspider%' THEN 'Baidu'
+        WHEN domain LIKE '%bingbot%' OR domain LIKE '%msnbot%' THEN 'Bing'
+        WHEN domain LIKE '%360spider%' OR domain LIKE '%360.cn%' OR domain LIKE '%qhnet.st%' THEN '360'
+        WHEN domain LIKE '%sogou%' THEN 'Sogou'
+        WHEN domain LIKE '%bytespider%' OR domain LIKE '%bytedance%' OR domain LIKE '%toutiaospider%' THEN 'ByteDance'
+        WHEN domain LIKE '%yisouspider%' OR domain LIKE '%shenma%' THEN 'Shenma'
+        ELSE 'Other'
+    END AS spider_type
+FROM rdns
+WHERE 
+    domain LIKE '%googlebot%' OR 
+    domain LIKE '%baiduspider%' OR 
+    domain LIKE '%bingbot%' OR domain LIKE '%msnbot%' OR
+    domain LIKE '%360spider%' OR domain LIKE '%360.cn%' OR domain LIKE '%qhnet.st%' OR
+    domain LIKE '%sogou%' OR 
+    domain LIKE '%bytespider%' OR domain LIKE '%bytedance%' OR domain LIKE '%toutiaospider%' OR
+    domain LIKE '%yisouspider%' OR domain LIKE '%shenma%';
+" > all_search_engines.csv
+
+# 查询全部蜘蛛的数量
+duckdb dns_warehouse.db "
+SELECT 
+    CASE 
+        WHEN domain LIKE '%googlebot%' THEN 'Google'
+        WHEN domain LIKE '%baiduspider%' THEN 'Baidu'
+        WHEN domain LIKE '%bingbot%' OR domain LIKE '%msnbot%' THEN 'Bing'
+        WHEN domain LIKE '%bytespider%' OR domain LIKE '%bytedance.com%' THEN 'ByteDance(字节)'
+        WHEN domain LIKE '%360spider%' OR domain LIKE '%360.cn%' OR domain LIKE '%qhnet.st%' THEN '360'
+        WHEN domain LIKE '%sogou%' THEN 'Sogou'
+        WHEN domain LIKE '%yisouspider%' OR domain LIKE '%shenma%' THEN 'Shenma(神马)'
+        ELSE 'Other_Spider'
+    END AS spider_name,
+    count(*) AS total_count
+FROM rdns
+WHERE 
+    domain LIKE '%googlebot%' OR 
+    domain LIKE '%baiduspider%' OR 
+    domain LIKE '%bingbot%' OR 
+    domain LIKE '%msnbot%' OR
+    domain LIKE '%bytespider%' OR 
+    domain LIKE '%bytedance.com%' OR
+    domain LIKE '%360spider%' OR 
+    domain LIKE '%360.cn%' OR 
+    domain LIKE '%qhnet.st%' OR
+    domain LIKE '%sogou%' OR 
+    domain LIKE '%yisouspider%' OR 
+    domain LIKE '%shenma%'
+GROUP BY spider_name
+ORDER BY total_count DESC;
+"
