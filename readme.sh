@@ -17,57 +17,49 @@ duckdb dns_warehouse.db "CREATE TABLE rdns AS SELECT ip, ptr[1] AS domain FROM r
 # 导出全部蜘蛛到csv
 duckdb dns_warehouse.db -csv -c "
 SELECT 
-    ip, 
-    domain,
+
     CASE 
-        WHEN domain LIKE '%googlebot%' THEN 'Google'
-        WHEN domain LIKE '%baiduspider%' THEN 'Baidu'
-        WHEN domain LIKE '%bingbot%' OR domain LIKE '%msnbot%' THEN 'Bing'
-        WHEN domain LIKE '%360spider%' OR domain LIKE '%360.cn%' OR domain LIKE '%qhnet.st%' THEN '360'
-        WHEN domain LIKE '%sogou%' THEN 'Sogou'
-        WHEN domain LIKE '%bytespider%' OR domain LIKE '%bytedance%' OR domain LIKE '%toutiaospider%' THEN 'ByteDance'
-        WHEN domain LIKE '%yisouspider%' OR domain LIKE '%shenma%' THEN 'Shenma'
+        WHEN domain LIKE '%googlebot%' THEN '谷歌蜘蛛'
+        WHEN domain LIKE 'baiduspider%' THEN '百度蜘蛛'
+        WHEN domain LIKE 'msnbot%' OR domain LIKE '%msnbot%' THEN '必应蜘蛛'
+        WHEN domain LIKE 'sogouspider%' THEN '搜狗蜘蛛'
+        WHEN domain LIKE 'bytespider%' THEN '字节蜘蛛'
+        WHEN domain LIKE 'shenmaspider%' THEN '神马蜘蛛'
         ELSE 'Other'
     END AS spider_type
+    ip, 
+    domain,
 FROM rdns
 WHERE 
     domain LIKE '%googlebot%' OR 
-    domain LIKE '%baiduspider%' OR 
-    domain LIKE '%bingbot%' OR domain LIKE '%msnbot%' OR
-    domain LIKE '%360spider%' OR domain LIKE '%360.cn%' OR domain LIKE '%qhnet.st%' OR
-    domain LIKE '%sogou%' OR 
-    domain LIKE '%bytespider%' OR domain LIKE '%bytedance%' OR domain LIKE '%toutiaospider%' OR
-    domain LIKE '%yisouspider%' OR domain LIKE '%shenma%';
+    domain LIKE 'baiduspider%' OR 
+    domain LIKE 'msnbot%'OR
+    domain LIKE 'sogouspider%' OR 
+    domain LIKE 'bytespider%' OR
+    domain LIKE 'shenmaspider%'
 " > all_search_engines.csv
 
 # 查询全部蜘蛛的数量
 duckdb dns_warehouse.db "
 SELECT 
     CASE 
-        WHEN domain LIKE '%googlebot%' THEN 'Google'
-        WHEN domain LIKE '%baiduspider%' THEN 'Baidu'
-        WHEN domain LIKE '%bingbot%' OR domain LIKE '%msnbot%' THEN 'Bing'
-        WHEN domain LIKE '%bytespider%' OR domain LIKE '%bytedance.com%' THEN 'ByteDance(字节)'
-        WHEN domain LIKE '%360spider%' OR domain LIKE '%360.cn%' OR domain LIKE '%qhnet.st%' THEN '360'
-        WHEN domain LIKE '%sogou%' THEN 'Sogou'
-        WHEN domain LIKE '%yisouspider%' OR domain LIKE '%shenma%' THEN 'Shenma(神马)'
+                WHEN domain LIKE '%googlebot%' THEN '谷歌蜘蛛'
+        WHEN domain LIKE 'baiduspider%' THEN '百度蜘蛛'
+        WHEN domain LIKE 'msnbot%' OR domain LIKE '%msnbot%' THEN '必应蜘蛛'
+        WHEN domain LIKE 'sogouspider%' THEN '搜狗蜘蛛'
+        WHEN domain LIKE 'bytespider%' THEN '字节蜘蛛'
+        WHEN domain LIKE 'shenmaspider%' THEN '神马蜘蛛'
         ELSE 'Other_Spider'
     END AS spider_name,
     count(*) AS total_count
 FROM rdns
 WHERE 
     domain LIKE '%googlebot%' OR 
-    domain LIKE '%baiduspider%' OR 
-    domain LIKE '%bingbot%' OR 
-    domain LIKE '%msnbot%' OR
-    domain LIKE '%bytespider%' OR 
-    domain LIKE '%bytedance.com%' OR
-    domain LIKE '%360spider%' OR 
-    domain LIKE '%360.cn%' OR 
-    domain LIKE '%qhnet.st%' OR
-    domain LIKE '%sogou%' OR 
-    domain LIKE '%yisouspider%' OR 
-    domain LIKE '%shenma%'
+    domain LIKE 'baiduspider%' OR 
+    domain LIKE 'msnbot%'OR
+    domain LIKE 'sogouspider%' OR 
+    domain LIKE 'bytespider%' OR
+    domain LIKE 'shenmaspider%'
 GROUP BY spider_name
 ORDER BY total_count DESC;
 "
